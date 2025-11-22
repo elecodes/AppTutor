@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTTS } from "./useTTS";
+import { useTTS } from "./hooks/useTTS";
 import FlashcardText from "./FlashcardText";
 import FlashcardAudioButtons from "./FlashcardAudioButtons";
 import FlashcardActions from "./FlashcardActions";
