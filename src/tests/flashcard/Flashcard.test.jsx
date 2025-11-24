@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
-// Nota: Asegúrate de que la ruta es correcta (sin /Flashcard extra al final)
+
 import Flashcard from "../../components/Flashcard";
 
 describe("Flashcard", () => {
@@ -9,7 +9,7 @@ describe("Flashcard", () => {
 
     // Verifica que se muestra el texto en inglés
     expect(screen.getByText("Apple")).toBeTruthy();
-  }); // <--- ¡ESTO ES LO QUE FALTABA! (Cierre del primer test)
+  }); 
 
   it("marca como aprendida", () => {
     const mockOnLearned = vi.fn();
