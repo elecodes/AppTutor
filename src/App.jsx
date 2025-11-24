@@ -352,8 +352,10 @@ function App() {
           </div>
         )}
       </main>
-      {/* TODO: Uncomment when testing environment supports custom elements properly */}
-      {/* <elevenlabs-convai agent-id="agent_5001k9j3ad8nfkr871pypnhj7m3r"></elevenlabs-convai> */}
+      {/* Only render in non-test environments */}
+      {import.meta.env.MODE !== 'test' && (
+        <elevenlabs-convai agent-id="agent_5001k9j3ad8nfkr871pypnhj7m3r"></elevenlabs-convai>
+      )}
     </div>
   );
 }
