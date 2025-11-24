@@ -13,6 +13,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -22,6 +24,13 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Debug - List test files
+        run: |
+          echo "Listing test files:"
+          ls -la src/tests/flashcard/
+          echo "Git tracked files:"
+          git ls-files src/tests/flashcard/
 
       - name: Run Lint
         run: npm run lint
