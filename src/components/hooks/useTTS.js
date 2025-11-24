@@ -1,7 +1,9 @@
-import { useCallback } from "react";
+import { useState } from "react";
 
-export function useTTS() {
-  const speak = useCallback(async (text, lang = "es") => {
+export const useTTS = () => {
+  const [audio, setAudio] = useState(null);
+
+  const speak = async (text, lang = "es") => {
     try {
       if (window.currentAudio) {
         window.currentAudio.pause();
@@ -20,14 +22,17 @@ export function useTTS() {
       const audioBlob = new Blob([arrayBuffer], { type: "audio/mpeg" });
       const audioURL = URL.createObjectURL(audioBlob);
 
-      const audio = new Audio(audioURL);
-      window.currentAudio = audio;
-      audio.play();
-      audio.onended = () => URL.revokeObjectURL(audioURL);
+      const newAudio = new Audio(audioURL);
+      window.currentAudio = newAudio;
+
+      newAudio.play();
+      newAudio.onended = () => URL.revokeObjectURL(audioURL);
+
+      setAudio(newAudio);
     } catch (err) {
       console.error("TTS error:", err);
     }
-  }, []);
+  };
 
-  return { speak };
-}
+  return { speak, audio };
+};
