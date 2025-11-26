@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"; 
-import { renderHook } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
 import { useTTS } from "../../components/hooks/useTTS"; 
 
-// 2. Mock global para evitar errores de Audio y URL en JSDOM
+// Mock global para evitar errores de Audio y URL en JSDOM
 global.URL.createObjectURL = vi.fn();
 global.URL.revokeObjectURL = vi.fn();
 
@@ -10,24 +10,55 @@ global.URL.revokeObjectURL = vi.fn();
 global.Audio = vi.fn().mockImplementation(() => ({
   play: vi.fn(),
   pause: vi.fn(),
-  onended: null, // Simulamos la propiedad onended
+  onended: null,
 }));
 
+// Mock Web Speech API con callbacks que se ejecutan automáticamente
+let mockUtterance = null;
+
+global.SpeechSynthesisUtterance = vi.fn().mockImplementation((text) => {
+  mockUtterance = {
+    text,
+    lang: "es-ES",
+    rate: 0.9,
+    pitch: 1.0,
+    volume: 1.0,
+    onend: null,
+    onerror: null,
+  };
+  return mockUtterance;
+});
+
+global.speechSynthesis = {
+  speak: vi.fn((utterance) => {
+    // Simular que el speech termina exitosamente después de un breve delay
+    setTimeout(() => {
+      if (utterance.onend) {
+        utterance.onend();
+      }
+    }, 0);
+  }),
+  cancel: vi.fn(),
+};
+
 describe("useTTS", () => {
-  // Limpiamos los mocks antes de cada test
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUtterance = null;
   });
 
-  it("devuelve una función speak", () => {
+  it("devuelve una función speak y currentProvider", () => {
     const { result } = renderHook(() => useTTS());
     expect(typeof result.current.speak).toBe("function");
+    expect(result.current.currentProvider).toBe(null);
   });
 
-  it("llama a fetch al usar speak", async () => {
-    //  mock de fetch existente
+  it("usa backend TTS cuando está disponible", async () => {
     const mockFetch = vi.spyOn(global, "fetch").mockResolvedValue({
       ok: true,
+      headers: {
+        get: (key) => (key === "X-TTS-Provider" ? "elevenlabs" : null),
+      },
       arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)),
     });
 
@@ -35,10 +66,97 @@ describe("useTTS", () => {
 
     await result.current.speak("Hello");
 
+    expect(mockFetch).toHaveBeenCalledWith(
+      "http://localhost:3001/tts",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ text: "Hello", language: "es" }),
+      })
+    );
+
+    mockFetch.mockRestore();
+  });
+
+  it("hace fallback a Web Speech API cuando el backend falla", async () => {
+    const mockFetch = vi.spyOn(global, "fetch").mockResolvedValue({
+      ok: false,
+      json: () => Promise.resolve({ error: "Backend failed" }),
+    });
+
+    const { result } = renderHook(() => useTTS());
+
+    await result.current.speak("Hello");
+
+    // Verificar que se intentó usar el backend
     expect(mockFetch).toHaveBeenCalled();
 
-    // Opcional: Verificar que se intentó reproducir audio
-    // expect(global.Audio).toHaveBeenCalled();
+    // Verificar que se usó Web Speech API como fallback
+    await waitFor(() => {
+      expect(global.speechSynthesis.speak).toHaveBeenCalled();
+    }, { timeout: 1000 });
+
+    mockFetch.mockRestore();
+  });
+
+  it("hace fallback a Web Speech API cuando el servidor no está disponible", async () => {
+    const mockFetch = vi.spyOn(global, "fetch").mockRejectedValue(
+      new Error("Network error")
+    );
+
+    const { result } = renderHook(() => useTTS());
+
+    await result.current.speak("Hello");
+
+    // Verificar que se usó Web Speech API
+    await waitFor(() => {
+      expect(global.speechSynthesis.speak).toHaveBeenCalled();
+    }, { timeout: 1000 });
+
+    mockFetch.mockRestore();
+  });
+
+  it("actualiza currentProvider según el proveedor usado", async () => {
+    const mockFetch = vi.spyOn(global, "fetch").mockResolvedValue({
+      ok: true,
+      headers: {
+        get: (key) => (key === "X-TTS-Provider" ? "google" : null),
+      },
+      arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)),
+    });
+
+    const { result } = renderHook(() => useTTS());
+
+    await result.current.speak("Hello");
+
+    await waitFor(() => {
+      expect(result.current.currentProvider).toBe("google");
+    }, { timeout: 1000 });
+
+    mockFetch.mockRestore();
+  });
+
+  it("detiene el audio actual antes de reproducir uno nuevo", async () => {
+    const mockAudio = {
+      play: vi.fn(),
+      pause: vi.fn(),
+      onended: null,
+    };
+
+    window.currentAudio = mockAudio;
+
+    const mockFetch = vi.spyOn(global, "fetch").mockResolvedValue({
+      ok: true,
+      headers: {
+        get: () => "elevenlabs",
+      },
+      arrayBuffer: () => Promise.resolve(new ArrayBuffer(8)),
+    });
+
+    const { result } = renderHook(() => useTTS());
+
+    await result.current.speak("New text");
+
+    expect(mockAudio.pause).toHaveBeenCalled();
 
     mockFetch.mockRestore();
   });

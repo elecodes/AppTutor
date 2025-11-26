@@ -1,68 +1,71 @@
 import express from "express";
-import fetch from "node-fetch";
 import cors from "cors";
 import dotenv from "dotenv";
 
+// IMPORTANT: Load environment variables BEFORE importing TTSService
 dotenv.config();
+
+// Now import TTSService after env vars are loaded
+import TTSService from "./src/services/TTSService.js";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const ELEVEN_API_KEY = process.env.ELEVENLABS_API_KEY;
-
-const ELEVEN_VOICE_EN = "t5ztDJA7pj9EyW9QIcJ2";
-const ELEVEN_VOICE_ES = "f9DFWr0Y8aHd6VNMEdTt";
-
-if (!ELEVEN_API_KEY) {
-  console.error("❌ ERROR: ELEVENLABS_API_KEY is missing in .env");
-} else {
-  console.log("✔️ API Key loaded correctly");
-}
-
 app.post("/tts", async (req, res) => {
   try {
     console.log("📩 /tts request:", req.body);
 
-    const { text, language } = req.body;
-    const voice = language === "es" ? ELEVEN_VOICE_ES : ELEVEN_VOICE_EN;
+    const { text, language = "es", options = {} } = req.body;
 
-    const apiRes = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${voice}`,
-      {
-        method: "POST",
-        headers: {
-          "xi-api-key": ELEVEN_API_KEY,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model_id: "eleven_multilingual_v2",
-          text,
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.5,
-          },
-        }),
-      }
-    );
-
-    if (!apiRes.ok) {
-      const errTxt = await apiRes.text();
-      console.error("🔴 ElevenLabs ERROR:", errTxt);
-      return res
-        .status(500)
-        .json({ error: "ElevenLabs error", details: errTxt });
+    if (!text) {
+      return res.status(400).json({ error: "Text is required" });
     }
 
-    const audioBuffer = await apiRes.arrayBuffer();
-    res.setHeader("Content-Type", "audio/mpeg");
-    res.send(Buffer.from(audioBuffer));
+    // Use TTSService with automatic fallback
+    const result = await TTSService.generateSpeech(text, language, options);
+
+    // Send audio with provider information in headers
+    res.setHeader("Content-Type", result.contentType);
+    res.setHeader("X-TTS-Provider", result.provider);
+    res.send(Buffer.from(result.audioBuffer));
+
+    console.log(`✅ Audio generated successfully using ${result.provider}`);
   } catch (err) {
-    console.error("Server ERROR:", err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error("🔴 TTS Error:", err.message);
+    
+    // Return error with suggestion to use Web Speech API fallback
+    res.status(500).json({ 
+      error: "TTS generation failed",
+      message: err.message,
+      fallbackAvailable: true,
+      suggestion: "Client should use Web Speech API as fallback"
+    });
   }
 });
 
-app.listen(3001, () => {
-  console.log("🚀 Server running on http://localhost:3001");
+// Health check endpoint
+app.get("/tts/status", async (req, res) => {
+  const status = await TTSService.getProviderStatus();
+  res.json({
+    providers: status,
+    available: status.elevenlabs || status.google || status.webSpeech
+  });
 });
+
+// Start server and log provider status
+async function startServer() {
+  // Get provider status (this will trigger initialization)
+  const providerStatus = await TTSService.getProviderStatus();
+  console.log("🔊 TTS Provider Status:", providerStatus);
+
+  if (!providerStatus.polly && !providerStatus.elevenlabs && !providerStatus.google) {
+    console.warn("⚠️ WARNING: No TTS providers configured! Only Web Speech API will be available.");
+  }
+
+  app.listen(3001, () => {
+    console.log("🚀 Server running on http://localhost:3001");
+  });
+}
+
+startServer().catch(console.error);

@@ -1,0 +1,163 @@
+import { useState } from "react";
+import { useFormValidation } from "./hooks/useFormValidation";
+
+export default function SignUpForm({ onSubmit }) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const validationRules = () => ({
+    email: (value) => {
+      if (!value) return "El email es obligatorio.";
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+        return "El email no es válido.";
+      return "";
+    },
+    password: (value) => {
+      if (!value) return "La contraseña es obligatoria.";
+      if (value.length < 6)
+        return "La contraseña debe tener al menos 6 caracteres.";
+      return "";
+    },
+    confirmPassword: (value, formData) => {
+      if (!value) return "Confirma tu contraseña.";
+      if (value !== formData.password)
+        return "Las contraseñas no coinciden.";
+      return "";
+    },
+  });
+
+  const {
+    form,
+    errors,
+    loading,
+    handleChange,
+    handleBlur,
+    handleSubmit,
+  } = useFormValidation(
+    { email: "", password: "", confirmPassword: "" },
+    validationRules
+  );
+
+  return (
+    <form
+      onSubmit={(e) => handleSubmit(e, onSubmit)}
+      className="flex flex-col gap-4"
+      autoComplete="on"
+    >
+      {errors.general && (
+        <div
+          role="alert"
+          className="text-red-600 text-sm bg-red-100 p-2 rounded"
+        >
+          {errors.general}
+        </div>
+      )}
+
+      {/* EMAIL */}
+      <div className="flex flex-col">
+        <label htmlFor="signup-email" className="font-medium">
+          Email *
+        </label>
+
+        <input
+          id="signup-email"
+          name="email"
+          type="email"
+          value={form.email}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          required
+          autoComplete="email"
+          className="border border-gray-300 p-3 rounded mt-1 text-base"
+        />
+
+        {errors.email && (
+          <span className="text-red-600 text-sm mt-1">{errors.email}</span>
+        )}
+      </div>
+
+      {/* PASSWORD */}
+      <div className="flex flex-col">
+        <label htmlFor="signup-password" className="font-medium">
+          Contraseña *
+        </label>
+
+        <div className="relative">
+          <input
+            id="signup-password"
+            name="password"
+            type={showPassword ? "text" : "password"}
+            value={form.password}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            required
+            autoComplete="new-password"
+            className="border border-gray-300 p-3 rounded mt-1 w-full text-base"
+          />
+
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-3 text-sm text-blue-600"
+            aria-label={
+              showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+            }
+          >
+            {showPassword ? "Ocultar" : "Mostrar"}
+          </button>
+        </div>
+
+        {errors.password && (
+          <span className="text-red-600 text-sm mt-1">{errors.password}</span>
+        )}
+      </div>
+
+      {/* CONFIRM PASSWORD */}
+      <div className="flex flex-col">
+        <label htmlFor="signup-confirm-password" className="font-medium">
+          Confirmar contraseña *
+        </label>
+
+        <div className="relative">
+          <input
+            id="signup-confirm-password"
+            name="confirmPassword"
+            type={showConfirmPassword ? "text" : "password"}
+            value={form.confirmPassword}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            required
+            autoComplete="new-password"
+            className="border border-gray-300 p-3 rounded mt-1 w-full text-base"
+          />
+
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            className="absolute right-3 top-3 text-sm text-blue-600"
+            aria-label={
+              showConfirmPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+            }
+          >
+            {showConfirmPassword ? "Ocultar" : "Mostrar"}
+          </button>
+        </div>
+
+        {errors.confirmPassword && (
+          <span className="text-red-600 text-sm mt-1">
+            {errors.confirmPassword}
+          </span>
+        )}
+      </div>
+
+      {/* SUBMIT */}
+      <button
+        type="submit"
+        disabled={loading}
+        className="bg-green-600 text-white p-3 rounded text-lg font-semibold mt-2 disabled:bg-green-300 hover:bg-green-700 transition"
+      >
+        {loading ? "Cargando..." : "Registrarse"}
+      </button>
+    </form>
+  );
+}
