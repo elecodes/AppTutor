@@ -27,7 +27,15 @@ export default defineConfig([
     },
   },
   {
-    files: ['**/*.test.{js,jsx}', 'test/**/*.js', 'server*.js'],
+    files: [
+      '**/*.test.{js,jsx}', 
+      'test/**/*.js', 
+      'server*.js', 
+      'test-*.js', 
+      'src/config/agents.js', 
+      'src/services/TTSService.js',
+      'playwright.config.js'
+    ],
     languageOptions: {
       globals: {
         ...globals.node,

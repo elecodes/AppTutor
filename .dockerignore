@@ -1,0 +1,13 @@
+node_modules
+dist
+.git
+.github
+.vscode
+.idea
+logs
+*.log
+.DS_Store
+lhci_reports
+.lighthouseci
+coverage
+test

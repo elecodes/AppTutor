@@ -3,7 +3,7 @@ async function testImport() {
   try {
     const { TextToSpeechClient } = await import('@google-cloud/text-to-speech');
     console.log("Import successful!");
-    const client = new TextToSpeechClient();
+    new TextToSpeechClient();
     console.log("Client created!");
   } catch (e) {
     console.error("Error:", e);

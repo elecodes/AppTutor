@@ -217,7 +217,7 @@ function App() {
             onClick={() => setMode("study")}
             className={`text-left px-3 py-2 rounded-lg transition ${
               mode === "study"
-                ? "bg-blue-500 text-white"
+                ? "bg-blue-600 text-white"
                 : "hover:bg-gray-100 text-gray-700"
             }`}
           >
@@ -229,7 +229,7 @@ function App() {
             disabled={!user}
             className={`text-left px-3 py-2 rounded-lg transition ${
               mode === "learned"
-                ? "bg-blue-500 text-white"
+                ? "bg-blue-600 text-white"
                 : "hover:bg-gray-100 text-gray-700"
             } ${!user ? "opacity-50 cursor-not-allowed" : ""}`}
           >
@@ -241,7 +241,7 @@ function App() {
             disabled={!user}
             className={`text-left px-3 py-2 rounded-lg transition ${
               mode === "quiz"
-                ? "bg-blue-500 text-white"
+                ? "bg-blue-600 text-white"
                 : "hover:bg-gray-100 text-gray-700"
             } ${!user ? "opacity-50 cursor-not-allowed" : ""}`}
           >
@@ -252,7 +252,7 @@ function App() {
             onClick={() => setMode("conversation")}
             className={`text-left px-3 py-2 rounded-lg transition ${
               mode === "conversation"
-                ? "bg-blue-500 text-white"
+                ? "bg-blue-600 text-white"
                 : "hover:bg-gray-100 text-gray-700"
             }`}
           >
@@ -263,7 +263,7 @@ function App() {
             onClick={() => setMode("dialogues")}
             className={`text-left px-3 py-2 rounded-lg transition ${
               mode === "dialogues"
-                ? "bg-blue-500 text-white"
+                ? "bg-blue-600 text-white"
                 : "hover:bg-gray-100 text-gray-700"
             }`}
           >
@@ -300,9 +300,11 @@ function App() {
       <main className="flex-1 p-6 flex flex-col">
         {/* Barra superior */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-blue-600">
-            🇪🇸 Aprende Español
-          </h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold text-blue-600">
+              🇪🇸 Aprende Español
+            </h1>
+          </div>
 
           <div className="flex items-center gap-3">
             <label htmlFor="nivel" className="text-sm text-gray-700">

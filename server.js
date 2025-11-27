@@ -2,15 +2,24 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
+import path from "path";
+import { fileURLToPath } from "url";
+
 // IMPORTANT: Load environment variables BEFORE importing TTSService
 dotenv.config();
 
 // Now import TTSService after env vars are loaded
 import TTSService from "./src/services/TTSService.js";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Serve static files from the build directory
+app.use(express.static(path.join(__dirname, "dist")));
 
 app.post("/tts", async (req, res) => {
   try {
@@ -42,6 +51,15 @@ app.post("/tts", async (req, res) => {
       suggestion: "Client should use Web Speech API as fallback"
     });
   }
+});
+
+// Handle SPA routing - return index.html for any unknown routes
+app.get("*", (req, res) => {
+  // Don't intercept API routes (though they should be matched above)
+  if (req.path.startsWith("/tts")) {
+    return res.status(404).json({ error: "Not found" });
+  }
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
 // Health check endpoint
