@@ -1,0 +1,82 @@
+# 🚒 Incident Response Playbook
+
+> **Goal**: Minimize Mean Time To Recovery (MTTR). Target: **< 15 min** for critical incidents.
+
+## 🧠 Philosophy: Runbook vs Playbook
+
+*   **Runbook**: Routine operational procedures (e.g., "How to deploy", "How to backup DB"). Followed when things are *working*.
+*   **Playbook**: Response to *incidents*. Focuses on diagnosis, mitigation, and recovery. Followed when things are *broken*.
+
+---
+
+## 🔄 Incident Response Lifecycle
+
+### 1. 🚨 Detect
+*   **Source**: Sentry Alerts, Uptime Robot, User Reports.
+*   **Action**: Acknowledge the alert.
+*   **Severity Assessment**:
+    *   **SEV-1 (Critical)**: System down, core feature (Dialogues/Auth) broken for all users. -> **Wake up On-Call**.
+    *   **SEV-2 (Major)**: Core feature broken for some users, or performance degraded. -> **Fix ASAP**.
+    *   **SEV-3 (Minor)**: Non-critical bug, cosmetic issue. -> **Next business day**.
+
+### 2. 🔍 Diagnose
+*   **Check Sentry**: Look for spikes in errors or specific transaction failures.
+*   **Check Logs**: `docker-compose logs -f server` or Cloud logs.
+*   **Reproduce**: Can you trigger it in Dev/Staging?
+*   **Recent Changes**: Did a deployment just happen? (Check Git history).
+
+### 3. 🛠️ Fix
+*   **Mitigation First**: Stop the bleeding.
+    *   **Rollback**: If a recent deploy caused it, revert immediately. `git revert` is faster than `git commit --fix`.
+    *   **Feature Flag**: Disable the broken feature via env vars if possible.
+*   **Fix Forward**: Only if the fix is obvious and trivial (one-line config change).
+*   **Verify**: Ensure the fix works in Staging before Prod.
+
+### 4. 📝 Document
+*   **Post-Mortem**: Required for all SEV-1.
+*   **Root Cause Analysis (RCA)**: Why did it happen? (5 Whys).
+*   **Action Items**: Prevent recurrence (add test, improve monitoring).
+
+---
+
+## 📈 Escalation Path
+
+**When to escalate to On-Call Engineer?**
+1.  **SEV-1 Confirmed**: System is down.
+2.  **Unknown Root Cause > 15 min**: You've tried diagnosing for 15 mins and have no clue.
+3.  **Fix is Risky**: You know the fix but it involves dangerous DB operations.
+
+---
+
+## 📖 Specific Playbooks
+
+### Scenario A: High Error Rate (HTTP 500s)
+**Trigger**: Sentry alert "Error rate > 5%".
+
+1.  **Check Sentry Issues**: Is it one specific error?
+    *   *Yes*: Fix that specific bug.
+    *   *No (Generic)*: Check Server Resources (CPU/RAM).
+2.  **Check Database**: Is the DB reachable?
+3.  **Rollback**: If started after deploy, revert to `HEAD^`.
+
+### Scenario B: Third-Party API Failure (OpenAI / Google / ElevenLabs)
+**Trigger**: `TTSService` or `DialogueGenerator` errors.
+
+1.  **Check Status Pages**:
+    *   [OpenAI Status](https://status.openai.com/)
+    *   [Google Cloud Status](https://status.cloud.google.com/)
+    *   [ElevenLabs Status](https://status.elevenlabs.io/)
+2.  **Switch Provider**:
+    *   If ElevenLabs is down -> System automatically falls back to Google/WebSpeech (verify this is happening).
+    *   If OpenAI is down -> Disable "Generate Dialogue" button or show maintenance message.
+
+### Scenario C: Frontend Assets 404
+**Trigger**: White screen, "Loading chunk failed".
+
+1.  **Clear Cache**: User browser cache might be stale.
+2.  **Verify Build**: Did `npm run build` complete successfully?
+3.  **Check Docker**: Are static files being served correctly? (`docker-compose restart server`).
+
+---
+
+> **Remember**: In an incident, **Communication > Code**. Tell the team/users what is happening.
