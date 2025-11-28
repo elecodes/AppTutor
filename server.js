@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -16,12 +17,32 @@ import DialogueGenerator from "./src/services/DialogueGenerator.js";
 import ConversationService from "./src/services/ConversationService.js";
 import GrammarService from "./src/services/GrammarService.js";
 import { validate } from "./src/middleware/validate.js";
-import { generateDialogueSchema, ttsSchema } from "./src/schemas/api.js";
+import { generateDialogueSchema, ttsSchema, grammarAnalysisSchema } from "./src/schemas/api.js";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // React needs unsafe-inline/eval in dev
+      connectSrc: [
+        "'self'", 
+        "https://identitytoolkit.googleapis.com", // Firebase Auth
+        "https://securetoken.googleapis.com", // Firebase Auth
+        "https://firestore.googleapis.com", // Firestore
+        "https://texttospeech.googleapis.com", // Google TTS
+        "https://api.elevenlabs.io", // ElevenLabs
+        "https://polly.us-east-1.amazonaws.com" // AWS Polly (adjust region if needed)
+      ],
+      imgSrc: ["'self'", "data:", "blob:"],
+      mediaSrc: ["'self'", "data:", "blob:"],
+      frameSrc: ["'self'"]
+    },
+  },
+}));
 app.use(cors());
 app.use(express.json());
 
@@ -60,12 +81,10 @@ app.post("/api/chat/message", async (req, res) => {
 });
 
 // 2. Grammar Analysis Endpoint
-app.post("/api/grammar/analyze", async (req, res) => {
+app.post("/api/grammar/analyze", validate(grammarAnalysisSchema), async (req, res) => {
   try {
     const { text, context } = req.body;
-    if (!text) {
-      return res.status(400).json({ error: "Missing text to analyze" });
-    }
+    // Validation handled by middleware
 
     const report = await GrammarService.analyze(text, context);
     res.json(report);

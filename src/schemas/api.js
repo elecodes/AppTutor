@@ -13,3 +13,8 @@ export const ttsSchema = z.object({
     speed: z.number().optional(),
   }).optional(),
 });
+
+export const grammarAnalysisSchema = z.object({
+  text: z.string().min(1, "Text is required"),
+  context: z.string().optional().default("General conversation"),
+});
