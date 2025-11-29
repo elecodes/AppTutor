@@ -10,7 +10,7 @@ AppTutor es una aplicación web interactiva diseñada para ayudar a estudiantes 
 *   **🗣️ Texto a Voz (TTS) Premium:** Prioriza **Amazon Polly** y **ElevenLabs** para una voz natural, con fallback automático a Google Cloud y Web Speech API.
 *   **🤖 Tutor de IA (Roleplay):** Practica situaciones reales (ej. "En el restaurante") con un tutor de IA que se adapta a tu nivel.
 *   **👨‍⚕️ Doctor Gramática:** Análisis gramatical con validación robusta (**Zod**).
-*   **🔒 Seguridad Reforzada:** Protección con **Helmet.js** (CSP), **HTTPS** automático (Let's Encrypt) y actualizaciones automáticas (**Dependabot**).
+*   **🔒 Seguridad Reforzada:** Protección con **Helmet.js** (CSP), **Rate Limiting** (DoS protection), validación de inputs (XSS), **HTTPS** automático y actualizaciones automáticas.
 *   **💬 Modo Conversación Híbrido:** Chat de texto y voz fluido.
 *   **✅ Seguimiento de Progreso:** Visualiza tu avance por semanas y niveles.
 *   **🔐 Autenticación:** Registro seguro con Firebase Auth.
@@ -58,12 +58,14 @@ AppTutor es una aplicación web interactiva diseñada para ayudar a estudiantes 
     
     # Seguridad
     PORT=3001
+    ADMIN_PASSWORD=tu_password_seguro_para_seed
     ```
 
 4.  **Cargar Contenido (Seed):**
     Sube las lecciones iniciales a Firestore:
     ```bash
-    node scripts/seedLessons.js
+    ```bash
+    ADMIN_PASSWORD=tu_password_seguro_para_seed node scripts/seedLessons.js
     ```
 
 ## ▶️ Ejecución

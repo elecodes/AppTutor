@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import rateLimit from "./src/middleware/rateLimit.js";
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -20,6 +21,7 @@ import { validate } from "./src/middleware/validate.js";
 import { generateDialogueSchema, ttsSchema, grammarAnalysisSchema } from "./src/schemas/api.js";
 
 const app = express();
+app.disable("x-powered-by"); // Hide framework info for security
 const PORT = process.env.PORT || 3001;
 
 // Middleware
@@ -45,6 +47,18 @@ app.use(helmet({
 }));
 app.use(cors());
 app.use(express.json());
+
+// Rate limiting to prevent DoS
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  message: "Too many requests from this IP, please try again after 15 minutes"
+});
+
+// Apply rate limiting to all requests
+app.use(limiter);
 
 // --- Routes ---
 
@@ -121,8 +135,16 @@ app.post("/tts", validate(ttsSchema), async (req, res) => {
     // Use TTSService with automatic fallback
     const result = await TTSService.generateSpeech(text, language, options);
 
+    // Validate Content-Type to prevent XSS
+    // Snyk: Unsanitized input from the HTTP request body flows into send
+    const contentType = result.contentType || "audio/mpeg";
+    if (!contentType.startsWith("audio/")) {
+      throw new Error(`Invalid content type returned: ${contentType}`);
+    }
+
     // Send audio with provider information in headers
-    res.setHeader("Content-Type", result.contentType);
+    res.setHeader("Content-Type", contentType);
+    res.setHeader("X-Content-Type-Options", "nosniff"); // Prevent MIME-sniffing
     res.setHeader("X-TTS-Provider", result.provider);
     res.send(Buffer.from(result.audioBuffer));
 

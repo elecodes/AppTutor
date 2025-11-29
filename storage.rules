@@ -1,0 +1,36 @@
+rules_version = '2';
+
+// Craft rules based on data in your Firestore database
+// allow write: if firestore.get(
+//    /databases/(default)/documents/users/$(request.auth.uid)).data.isAdmin;
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Helper function to check if user is accessing their own data
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // Rules for user profiles
+    match /users/{userId}/{allPaths=**} {
+      // Allow read if authenticated (e.g. to see other users' avatars in a chat)
+      allow read: if isAuthenticated();
+      
+      // Allow write only if it's the user's own folder
+      // And restrict size to 5MB
+      allow write: if isOwner(userId) 
+                   && request.resource.size < 5 * 1024 * 1024; 
+                   // && request.resource.contentType.matches('image/.*'); // Optional: restrict to images
+    }
+
+    // Default deny
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

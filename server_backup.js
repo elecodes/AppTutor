@@ -8,6 +8,7 @@ console.log("DEBUG API KEY:", process.env.ELEVENLABS_API_KEY);
 
 
 const app = express();
+app.disable("x-powered-by"); // Hide framework info for security
 app.use(cors());
 app.use(express.json());
 

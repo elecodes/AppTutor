@@ -1,4 +1,6 @@
 import { db } from '../firebase/firebase.js';
+/* eslint-env node */
+/* global process */
 import { collection, getDocs } from 'firebase/firestore';
 
 async function testConnection() {

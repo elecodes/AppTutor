@@ -2,6 +2,7 @@
 import { initializeApp } from "firebase/app";
 // import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
+// import { getStorage } from "firebase/storage";
 import { 
   getAuth, 
   GoogleAuthProvider, 
@@ -12,14 +13,14 @@ import {
 } from "firebase/auth";
 
 // Your web app's Firebase configuration
+// Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyC8tcidJsblicI_u2c77zHR6NRUnzwRtEE",
-  authDomain: "apptutor-a4230.firebaseapp.com",
-  projectId: "apptutor-a4230",
-  storageBucket: "apptutor-a4230.firebasestorage.app",
-  messagingSenderId: "615122073666",
-  appId: "1:615122073666:web:25054fde560ce9dde395db",
-  measurementId: "G-RKSKS0CYRR",
+  apiKey: "AIzaSyC-DB6B9R7yuXWJq0Tm8cc5Qe952ngHPk8",
+  authDomain: "apptutor-v2.firebaseapp.com",
+  projectId: "apptutor-v2",
+  storageBucket: "apptutor-v2.firebasestorage.app",
+  messagingSenderId: "806682205124",
+  appId: "1:806682205124:web:2a32b811ec08d24adba291"
 };
 
 // Initialize Firebase
@@ -31,6 +32,9 @@ export const auth = getAuth(app);
 
 // Firestore (lo usaremos para memoria del usuario)
 export const db = getFirestore(app);
+
+// Storage (Reemplazado por Cloudinary)
+// export const storage = getStorage(app);
 
 // Providers (Google login opcional)
 export const googleProvider = new GoogleAuthProvider();

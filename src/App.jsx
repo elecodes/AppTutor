@@ -6,6 +6,7 @@ const AuthForm = React.lazy(() => import("./components/auth/AuthForm"));
 const DialogueViewer = React.lazy(() => import("./components/DialogueViewer"));
 const DialogueGenerator = React.lazy(() => import("./components/DialogueGenerator"));
 const ConversationMode = React.lazy(() => import("./components/ConversationMode"));
+const Profile = React.lazy(() => import("./pages/Profile"));
 
 import { useAuth } from "./hooks/useAuth";
 import UserService from "./services/UserService";
@@ -308,6 +309,17 @@ function App() {
             🗣️ {sidebarOpen && "Diálogos"}
           </button>
 
+          <button
+            onClick={() => setMode("profile")}
+            className={`text-left px-3 py-2 rounded-lg transition ${
+              mode === "profile"
+                ? "bg-blue-600 text-white"
+                : "hover:bg-gray-100 text-gray-700"
+            }`}
+          >
+            👤 {sidebarOpen && "Mi Perfil"}
+          </button>
+
           {user && (
             <button
               onClick={handleClearLearned}
@@ -598,6 +610,13 @@ function App() {
                   )}
                 </Suspense>
               </>
+            )}
+
+            {/* === Profile Mode === */}
+            {mode === "profile" && (
+              <Suspense fallback={<Loading />}>
+                <Profile />
+              </Suspense>
             )}
           </Suspense>
         )}
