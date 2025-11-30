@@ -24,8 +24,8 @@ service firebase.storage {
       // Allow write only if it's the user's own folder
       // And restrict size to 5MB
       allow write: if isOwner(userId) 
-                   && request.resource.size < 5 * 1024 * 1024; 
-                   // && request.resource.contentType.matches('image/.*'); // Optional: restrict to images
+                   && request.resource.size < 5 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
     }
 
     // Default deny

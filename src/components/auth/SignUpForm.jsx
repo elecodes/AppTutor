@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useFormValidation } from "./hooks/useFormValidation";
 
+import { validatePassword } from "../../utils/passwordValidation";
+
 export default function SignUpForm({ onSubmit }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -12,12 +14,7 @@ export default function SignUpForm({ onSubmit }) {
         return "El email no es válido.";
       return "";
     },
-    password: (value) => {
-      if (!value) return "La contraseña es obligatoria.";
-      if (value.length < 6)
-        return "La contraseña debe tener al menos 6 caracteres.";
-      return "";
-    },
+    password: validatePassword,
     confirmPassword: (value, formData) => {
       if (!value) return "Confirma tu contraseña.";
       if (value !== formData.password)
@@ -38,9 +35,21 @@ export default function SignUpForm({ onSubmit }) {
     validationRules
   );
 
+  const handleFormSubmit = async (formData) => {
+    try {
+      await onSubmit(formData);
+    } catch (error) {
+      if (error.code === "auth/too-many-requests") {
+        throw new Error("Demasiados intentos. Por favor, inténtelo de nuevo más tarde (429).");
+      }
+      // Generic error message for security
+      throw new Error("No se pudo crear la cuenta. Verifique sus datos.");
+    }
+  };
+
   return (
     <form
-      onSubmit={(e) => handleSubmit(e, onSubmit)}
+      onSubmit={(e) => handleSubmit(e, handleFormSubmit)}
       className="flex flex-col gap-4"
       autoComplete="on"
     >

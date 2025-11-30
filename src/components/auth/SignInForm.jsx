@@ -13,8 +13,8 @@ export default function SignInForm({ onSubmit }) {
     },
     password: (value) => {
       if (!value) return "La contraseña es obligatoria.";
-      if (value.length < 6)
-        return "La contraseña debe tener al menos 6 caracteres.";
+      if (value.length < 12)
+        return "La contraseña debe tener al menos 12 caracteres.";
       return "";
     },
   });
@@ -31,9 +31,21 @@ export default function SignInForm({ onSubmit }) {
     validationRules
   );
 
+  const handleFormSubmit = async (formData) => {
+    try {
+      await onSubmit(formData);
+    } catch (error) {
+      if (error.code === "auth/too-many-requests") {
+        throw new Error("Demasiados intentos. Por favor, inténtelo de nuevo más tarde (429).");
+      }
+      // Generic error message for security
+      throw new Error("Las credenciales no son válidas.");
+    }
+  };
+
   return (
     <form
-      onSubmit={(e) => handleSubmit(e, onSubmit)}
+      onSubmit={(e) => handleSubmit(e, handleFormSubmit)}
       className="flex flex-col gap-4"
       autoComplete="on"
     >

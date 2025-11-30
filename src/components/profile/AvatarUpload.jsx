@@ -19,8 +19,10 @@ const AvatarUpload = ({ user, userProfile, onUploadComplete }) => {
     if (!file) return;
 
     // Basic validation
-    if (!file.type.startsWith('image/')) {
-      alert('Por favor selecciona una imagen.');
+    // Strict validation for image types
+    const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!file.type.startsWith('image/') || !validImageTypes.includes(file.type)) {
+      alert('Solo se permiten archivos de imagen (JPEG, PNG, GIF, WEBP).');
       return;
     }
 
